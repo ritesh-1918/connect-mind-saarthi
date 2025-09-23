@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Navigation from '@/components/Navigation';
 import HeroSection from '@/components/HeroSection';
-import AssessmentSection from '@/components/AssessmentSection';
+import EnhancedAssessmentSection from '@/components/EnhancedAssessmentSection';
 import ChatSupport from '@/components/ChatSupport';
 import ProfessionalConnect from '@/components/ProfessionalConnect';
 import CommunityForum from '@/components/CommunityForum';
@@ -23,7 +23,7 @@ const Index = () => {
       <HeroSection language={language} />
 
       {/* Assessment Section */}
-      <AssessmentSection language={language} onOpenChat={() => setIsChatOpen(true)} />
+      <EnhancedAssessmentSection language={language} onOpenChat={() => setIsChatOpen(true)} />
 
       {/* Professional Connect */}
       <ProfessionalConnect language={language} />
