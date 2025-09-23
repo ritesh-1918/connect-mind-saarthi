@@ -1,12 +1,60 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from 'react';
+import Navigation from '@/components/Navigation';
+import HeroSection from '@/components/HeroSection';
+import AssessmentSection from '@/components/AssessmentSection';
+import ChatSupport from '@/components/ChatSupport';
+import ProfessionalConnect from '@/components/ProfessionalConnect';
+import CommunityForum from '@/components/CommunityForum';
+import ResourcesSection from '@/components/ResourcesSection';
+import Footer from '@/components/Footer';
+import { Button } from '@/components/ui/button';
+import { MessageCircle } from 'lucide-react';
 
 const Index = () => {
+  const [language, setLanguage] = useState<'en' | 'hi'>('en');
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background">
+      {/* Navigation */}
+      <Navigation language={language} setLanguage={setLanguage} />
+
+      {/* Hero Section */}
+      <HeroSection language={language} />
+
+      {/* Assessment Section */}
+      <AssessmentSection language={language} onOpenChat={() => setIsChatOpen(true)} />
+
+      {/* Professional Connect */}
+      <ProfessionalConnect language={language} />
+
+      {/* Community Forum */}
+      <CommunityForum language={language} />
+
+      {/* Resources Section */}
+      <ResourcesSection language={language} />
+
+      {/* Footer */}
+      <Footer language={language} setLanguage={setLanguage} />
+
+      {/* Floating Chat Button */}
+      {!isChatOpen && (
+        <Button
+          variant="wellness"
+          size="icon"
+          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-xl hover:shadow-2xl z-40 animate-pulse-glow"
+          onClick={() => setIsChatOpen(true)}
+        >
+          <MessageCircle className="h-6 w-6" />
+        </Button>
+      )}
+
+      {/* Chat Support */}
+      <ChatSupport
+        language={language}
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+      />
     </div>
   );
 };

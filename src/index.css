@@ -2,41 +2,61 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Saarthi Connect Mind Design System - Mental Health App Theme */
 
 @layer base {
   :root {
+    /* Mental wellness color palette */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 224 15% 25%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 224 15% 25%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 224 15% 25%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary: Calming purple-blue gradient colors */
+    --primary: 229 73% 69%;
+    --primary-deep: 271 36% 45%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Wellness-focused secondary colors */
+    --secondary: 220 13% 95%;
+    --secondary-foreground: 224 15% 25%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 13% 95%;
+    --muted-foreground: 224 15% 55%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 229 73% 95%;
+    --accent-foreground: 271 36% 45%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Risk level indicators */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 229 73% 69%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
+
+    /* Mental health app specific tokens */
+    --wellness-gradient: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-deep)));
+    --glass-bg: hsla(0, 0%, 100%, 0.25);
+    --glass-border: hsla(0, 0%, 100%, 0.18);
+    --shadow-soft: 0 8px 32px hsla(var(--primary), 0.15);
+    --shadow-glow: 0 0 40px hsla(var(--primary), 0.2);
+    
+    /* Typography scale */
+    --font-heading: 'Poppins', system-ui, sans-serif;
+    --font-body: 'Poppins', system-ui, sans-serif;
 
     --sidebar-background: 0 0% 98%;
 
@@ -100,6 +120,52 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-body;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-semibold;
+  }
+}
+
+@layer components {
+  /* Glassmorphism effects */
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .wellness-gradient {
+    background: var(--wellness-gradient);
+  }
+
+  /* Animation utilities */
+  .animate-gentle-float {
+    animation: gentle-float 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    background: var(--wellness-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+@keyframes gentle-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: var(--shadow-soft); }
+  50% { box-shadow: var(--shadow-glow); }
 }
