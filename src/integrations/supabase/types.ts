@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_messages: {
+        Row: {
+          created_at: string
+          id: string
+          is_counselor: boolean | null
+          message: string
+          message_type: string | null
+          receiver_id: string | null
+          room_id: string | null
+          sender_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_counselor?: boolean | null
+          message: string
+          message_type?: string | null
+          receiver_id?: string | null
+          room_id?: string | null
+          sender_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_counselor?: boolean | null
+          message?: string
+          message_type?: string | null
+          receiver_id?: string | null
+          room_id?: string | null
+          sender_id?: string
+        }
+        Relationships: []
+      }
+      mood_entries: {
+        Row: {
+          created_at: string
+          id: string
+          mood_emoji: string
+          mood_score: number
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mood_emoji: string
+          mood_score: number
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mood_emoji?: string
+          mood_score?: number
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
