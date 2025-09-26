@@ -1,25 +1,32 @@
 import { useState } from 'react';
-import { Menu, X, Globe } from 'lucide-react';
+import { Menu, X, Globe, User, LogIn, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface NavigationProps {
   language: 'en' | 'hi';
   setLanguage: (lang: 'en' | 'hi') => void;
+  user?: any;
+  onAuthClick: () => void;
+  isDarkMode: boolean;
+  toggleDarkMode: () => void;
 }
 
-const Navigation = ({ language, setLanguage }: NavigationProps) => {
+const Navigation = ({ language, setLanguage, user, onAuthClick, isDarkMode, toggleDarkMode }: NavigationProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const content = {
     en: {
       brand: 'Saarthi Connect Mind',
-      nav: ['Assessment', 'Chat Support', 'Book Session', 'Community', 'Resources'],
-      crisis: 'Crisis Support'
+      nav: ['Assessment', 'Games', 'Chat Support', 'Book Session', 'Community', 'Resources'],
+      crisis: 'Crisis Support',
+      login: 'Login'
     },
     hi: {
       brand: 'सारथी कनेक्ट माइंड',
-      nav: ['मूल्यांकन', 'चैट सपोर्ट', 'सत्र बुक करें', 'कम्युनिटी', 'संसाधन'],
-      crisis: 'संकट सहायता'
+      nav: ['मूल्यांकन', 'गेम्स', 'चैट सपोर्ट', 'सत्र बुक करें', 'कम्युनिटी', 'संसाधन'],
+      crisis: 'संकट सहायता',
+      login: 'लॉगिन'
     }
   };
 
@@ -45,7 +52,7 @@ const Navigation = ({ language, setLanguage }: NavigationProps) => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             {content[language].nav.map((item, index) => {
-              const sectionIds = ['assessment', 'chat', 'booking', 'community', 'resources'];
+              const sectionIds = ['assessment', 'games', 'chat', 'booking', 'community', 'resources'];
               return (
                 <button
                   key={item}
@@ -58,8 +65,16 @@ const Navigation = ({ language, setLanguage }: NavigationProps) => {
             })}
           </div>
 
-          {/* Language Toggle & Crisis Button */}
+          {/* Language Toggle & User Actions */}
           <div className="hidden md:flex items-center space-x-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleDarkMode}
+              className="min-h-[44px] min-w-[44px]"
+            >
+              {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -72,6 +87,18 @@ const Navigation = ({ language, setLanguage }: NavigationProps) => {
             <Button variant="warning" size="sm">
               {content[language].crisis}
             </Button>
+            {user ? (
+              <Avatar className="h-8 w-8 cursor-pointer">
+                <AvatarFallback>
+                  <User className="h-4 w-4" />
+                </AvatarFallback>
+              </Avatar>
+            ) : (
+              <Button variant="wellness" size="sm" onClick={onAuthClick}>
+                <LogIn className="mr-2 h-4 w-4" />
+                {content[language].login}
+              </Button>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -91,7 +118,7 @@ const Navigation = ({ language, setLanguage }: NavigationProps) => {
           <div className="md:hidden animate-slide-in-right">
             <div className="px-2 pt-2 pb-3 space-y-1 bg-white/90 backdrop-blur-lg rounded-lg mt-2 shadow-lg">
               {content[language].nav.map((item, index) => {
-                const sectionIds = ['assessment', 'chat', 'booking', 'community', 'resources'];
+                const sectionIds = ['assessment', 'games', 'chat', 'booking', 'community', 'resources'];
                 return (
                   <button
                     key={item}
@@ -102,19 +129,37 @@ const Navigation = ({ language, setLanguage }: NavigationProps) => {
                   </button>
                 );
               })}
-              <div className="flex items-center justify-between pt-2 border-t border-border">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}
-                  className="flex items-center gap-2"
-                >
-                  <Globe className="h-4 w-4" />
-                  {language === 'en' ? 'हिं' : 'EN'}
-                </Button>
-                <Button variant="warning" size="sm">
-                  {content[language].crisis}
-                </Button>
+              <div className="space-y-2 pt-2 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleDarkMode}
+                    className="flex items-center gap-2"
+                  >
+                    {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}
+                    className="flex items-center gap-2"
+                  >
+                    <Globe className="h-4 w-4" />
+                    {language === 'en' ? 'हिं' : 'EN'}
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between">
+                  <Button variant="warning" size="sm">
+                    {content[language].crisis}
+                  </Button>
+                  {!user && (
+                    <Button variant="wellness" size="sm" onClick={onAuthClick}>
+                      <LogIn className="mr-2 h-4 w-4" />
+                      {content[language].login}
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </div>

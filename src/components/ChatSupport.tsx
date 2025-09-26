@@ -9,6 +9,7 @@ interface ChatSupportProps {
   language: 'en' | 'hi';
   isOpen: boolean;
   onClose: () => void;
+  user?: any;
 }
 
 interface Message {
@@ -24,7 +25,7 @@ interface Message {
   quickReplies?: string[];
 }
 
-const ChatSupport = ({ language, isOpen, onClose }: ChatSupportProps) => {
+const ChatSupport = ({ language, isOpen, onClose, user }: ChatSupportProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
