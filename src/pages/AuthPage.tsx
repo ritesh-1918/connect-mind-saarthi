@@ -51,9 +51,10 @@ const AuthPage = () => {
     } catch (error) {
       if (error instanceof z.ZodError) {
         const newErrors: {[key: string]: string} = {};
-        error.errors.forEach((err) => {
-          if (err.path) {
-            newErrors[err.path[0]] = err.message;
+        error.issues.forEach((issue) => {
+          if (issue.path && issue.path.length > 0) {
+            const fieldName = String(issue.path[0]);
+            newErrors[fieldName] = issue.message;
           }
         });
         setErrors(newErrors);
