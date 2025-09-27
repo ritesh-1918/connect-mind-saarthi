@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Calendar, Clock, Star, Languages, Video, MessageSquare } from 'lucide-react';
+import { Calendar, Clock, Star, Languages, Video, MessageSquare, UserPlus } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import MentorRegistration from './MentorRegistration';
 
 interface ProfessionalConnectProps {
   language: 'en' | 'hi';
@@ -13,6 +16,8 @@ const ProfessionalConnect = ({ language }: ProfessionalConnectProps) => {
   const [selectedDate, setSelectedDate] = useState(0);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [showMentorRegistration, setShowMentorRegistration] = useState(false);
+  const { user } = useAuth();
 
   const content = {
     en: {
@@ -27,7 +32,9 @@ const ProfessionalConnect = ({ language }: ProfessionalConnectProps) => {
       timeSlots: ['10:00 AM', '2:00 PM', '4:00 PM', '6:00 PM'],
       rating: 'Rating',
       languages: 'Languages',
-      specialization: 'Specialization'
+      specialization: 'Specialization',
+      joinAsProfessional: 'Join as Professional',
+      becomeMentor: 'Become a Mentor/Therapist'
     },
     hi: {
       title: 'पेशेवर काउंसलर से जुड़ें',
@@ -41,7 +48,9 @@ const ProfessionalConnect = ({ language }: ProfessionalConnectProps) => {
       timeSlots: ['सुबह 10:00', 'दोपहर 2:00', 'शाम 4:00', 'शाम 6:00'],
       rating: 'रेटिंग',
       languages: 'भाषाएं',
-      specialization: 'विशेषज्ञता'
+      specialization: 'विशेषज्ञता',
+      joinAsProfessional: 'पेशेवर के रूप में जुड़ें',
+      becomeMentor: 'मेंटर/थेरेपिस्ट बनें'
     }
   };
 
@@ -72,6 +81,8 @@ const ProfessionalConnect = ({ language }: ProfessionalConnectProps) => {
     }
   ];
 
+  const [selectedCounselor, setSelectedCounselor] = useState(counselors[0]);
+
   // Generate next 7 days
   const dates = Array.from({ length: 7 }, (_, i) => {
     const date = new Date();
@@ -91,11 +102,59 @@ const ProfessionalConnect = ({ language }: ProfessionalConnectProps) => {
     }
   };
 
-  const confirmBooking = () => {
-    // Here you would typically send the booking data to your backend
-    alert(language === 'en' ? 'Booking confirmed!' : 'बुकिंग की पुष्टि हो गई!');
-    setShowBookingModal(false);
-    setSelectedTime(null);
+  const confirmBooking = async () => {
+    if (!user) {
+      alert(language === 'en' ? 'Please login to book session' : 'सत्र बुक करने के लिए कृपया लॉगिन करें');
+      return;
+    }
+
+    try {
+      // Save booking to database
+      const { error: bookingError } = await supabase
+        .from('session_bookings')
+        .insert({
+          user_id: user.id,
+          counselor_name: selectedCounselor.name,
+          session_date: dates[selectedDate].toISOString().split('T')[0],
+          session_time: selectedTime!,
+          booking_type: 'session'
+        });
+
+      if (bookingError) {
+        console.error('Error saving booking:', bookingError);
+        alert(language === 'en' ? 'Error booking session' : 'सत्र बुक करने में त्रुटि');
+        return;
+      }
+
+      // Send confirmation email
+      try {
+        const { error: emailError } = await supabase.functions.invoke('send-booking-confirmation', {
+          body: {
+            userEmail: user.email,
+            userName: user.user_metadata?.display_name || user.email,
+            counselorName: selectedCounselor.name,
+            sessionDate: formatDate(dates[selectedDate]),
+            sessionTime: selectedTime!
+          }
+        });
+
+        if (emailError) {
+          console.error('Error sending confirmation email:', emailError);
+        }
+      } catch (emailError) {
+        console.error('Email service error:', emailError);
+      }
+
+      alert(language === 'en' 
+        ? 'Booking confirmed! Check your email for confirmation details.' 
+        : 'बुकिंग की पुष्टि हो गई! पुष्टि के विवरण के लिए अपना ईमेल चेक करें।');
+      
+      setShowBookingModal(false);
+      setSelectedTime(null);
+    } catch (error) {
+      console.error('Error confirming booking:', error);
+      alert(language === 'en' ? 'Error booking session' : 'सत्र बुक करने में त्रुटि');
+    }
   };
 
   return (
@@ -105,9 +164,19 @@ const ProfessionalConnect = ({ language }: ProfessionalConnectProps) => {
           <h2 className="text-4xl font-heading font-bold text-foreground mb-4">
             {content[language].title}
           </h2>
-          <p className="text-xl text-muted-foreground">
+          <p className="text-xl text-muted-foreground mb-6">
             {content[language].description}
           </p>
+          
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => setShowMentorRegistration(true)}
+            className="flex items-center gap-2"
+          >
+            <UserPlus className="h-5 w-5" />
+            {content[language].joinAsProfessional}
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -178,7 +247,13 @@ const ProfessionalConnect = ({ language }: ProfessionalConnectProps) => {
           {/* Counselors List */}
           <div className="space-y-4">
             {counselors.map((counselor) => (
-              <Card key={counselor.id} className="glass border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <Card 
+                key={counselor.id} 
+                className={`glass border-0 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer ${
+                  selectedCounselor.id === counselor.id ? 'ring-2 ring-primary' : ''
+                }`}
+                onClick={() => setSelectedCounselor(counselor)}
+              >
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
                     <Avatar className="h-16 w-16">
@@ -231,7 +306,7 @@ const ProfessionalConnect = ({ language }: ProfessionalConnectProps) => {
                 <div className="text-center space-y-2">
                   <p><strong>Date:</strong> {formatDate(dates[selectedDate])}</p>
                   <p><strong>Time:</strong> {selectedTime}</p>
-                  <p><strong>Counselor:</strong> Dr. Priya Sharma</p>
+                  <p><strong>Counselor:</strong> {selectedCounselor.name}</p>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={() => setShowBookingModal(false)} className="flex-1">
@@ -245,6 +320,13 @@ const ProfessionalConnect = ({ language }: ProfessionalConnectProps) => {
             </Card>
           </div>
         )}
+
+        {/* Mentor Registration Modal */}
+        <MentorRegistration
+          language={language}
+          isOpen={showMentorRegistration}
+          onClose={() => setShowMentorRegistration(false)}
+        />
       </div>
     </section>
   );

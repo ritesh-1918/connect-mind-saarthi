@@ -50,41 +50,75 @@ const HeroSection = ({ language }: HeroSectionProps) => {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <div className="animate-gentle-float">
-          <h1 className="text-5xl md:text-7xl font-heading font-bold text-white mb-6 leading-tight">
-            {content[language].title}
-          </h1>
-          <p className="text-2xl md:text-3xl text-white/90 mb-4 font-medium">
-            {content[language].subtitle}
-          </p>
-          <p className="text-lg md:text-xl text-white/80 mb-12 max-w-3xl mx-auto leading-relaxed">
-            {content[language].tagline}
-          </p>
-        </div>
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-screen py-20">
+          {/* Left Content */}
+          <div className="text-center lg:text-left animate-gentle-float">
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm mb-6">
+              <span className="text-white/90 text-sm font-medium">
+                {language === 'en' ? '🌟 Your Mental Wellness Journey Starts Here' : '🌟 आपकी मानसिक कल्याण यात्रा यहाँ शुरू होती है'}
+              </span>
+            </div>
+            
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-heading font-bold text-white mb-6 leading-tight">
+              {content[language].title}
+            </h1>
+            <p className="text-xl md:text-2xl text-white/90 mb-4 font-medium">
+              {content[language].subtitle}
+            </p>
+            <p className="text-lg text-white/80 mb-8 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+              {content[language].tagline}
+            </p>
 
-        <div className="mb-12">
-          <Button 
-            variant="hero" 
-            size="xl"
-            onClick={scrollToAssessment}
-            className="text-xl font-semibold"
-          >
-            {content[language].cta}
-          </Button>
-        </div>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+              <Button 
+                variant="hero" 
+                size="xl"
+                onClick={scrollToAssessment}
+                className="text-lg font-semibold px-8 py-4"
+              >
+                {content[language].cta}
+              </Button>
+              <Button 
+                variant="outline" 
+                size="xl"
+                className="text-lg font-semibold px-8 py-4 border-white/30 text-white hover:bg-white/10"
+                onClick={() => document.getElementById('community')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                {language === 'en' ? 'Join Community' : 'कम्युनिटी में शामिल हों'}
+              </Button>
+            </div>
+          </div>
 
-        {/* Features */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-          {content[language].features.map((feature, index) => {
-            const Icon = feature.icon;
-            return (
-              <div key={index} className="glass rounded-xl p-6 text-center transform hover:scale-105 transition-all duration-300">
-                <Icon className="h-12 w-12 text-white mx-auto mb-4" />
-                <p className="text-white font-medium text-lg">{feature.text}</p>
-              </div>
-            );
-          })}
+          {/* Right Content - Features Cards */}
+          <div className="space-y-6">
+            {content[language].features.map((feature, index) => {
+              const Icon = feature.icon;
+              return (
+                <div 
+                  key={index} 
+                  className="glass rounded-xl p-6 transform hover:scale-105 transition-all duration-300 hover:shadow-2xl"
+                  style={{ animationDelay: `${index * 200}ms` }}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="flex-shrink-0">
+                      <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                        <Icon className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-white font-semibold text-lg mb-1">{feature.text}</h3>
+                      <p className="text-white/70 text-sm">
+                        {index === 0 && (language === 'en' ? 'Evidence-based support tailored for you' : 'आपके लिए तैयार साक्ष्य-आधारित सहायता')}
+                        {index === 1 && (language === 'en' ? 'Your privacy and anonymity protected' : 'आपकी गोपनीयता और गुमनामी सुरक्षित')}
+                        {index === 2 && (language === 'en' ? 'Licensed counselors and peer support' : 'लाइसेंसी काउंसलर और सहकर्मी सहायता')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 

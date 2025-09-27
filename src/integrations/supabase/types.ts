@@ -47,6 +47,96 @@ export type Database = {
         }
         Relationships: []
       }
+      community_posts: {
+        Row: {
+          category: string
+          comments_count: number | null
+          content: string
+          created_at: string
+          id: string
+          is_moderated: boolean | null
+          likes_count: number | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          comments_count?: number | null
+          content: string
+          created_at?: string
+          id?: string
+          is_moderated?: boolean | null
+          likes_count?: number | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          comments_count?: number | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_moderated?: boolean | null
+          likes_count?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mentor_applications: {
+        Row: {
+          bio: string | null
+          created_at: string
+          email: string
+          experience_years: number
+          full_name: string
+          id: string
+          languages: string[]
+          phone: string | null
+          qualifications: string
+          specialization: string
+          status: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string
+          email: string
+          experience_years: number
+          full_name: string
+          id?: string
+          languages?: string[]
+          phone?: string | null
+          qualifications: string
+          specialization: string
+          status?: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string
+          email?: string
+          experience_years?: number
+          full_name?: string
+          id?: string
+          languages?: string[]
+          phone?: string | null
+          qualifications?: string
+          specialization?: string
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mood_entries: {
         Row: {
           created_at: string
@@ -108,6 +198,45 @@ export type Database = {
           id?: string
           mood_history?: Json | null
           preferences?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      session_bookings: {
+        Row: {
+          booking_type: string
+          counselor_name: string
+          created_at: string
+          email_sent: boolean | null
+          id: string
+          session_date: string
+          session_time: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          booking_type?: string
+          counselor_name: string
+          created_at?: string
+          email_sent?: boolean | null
+          id?: string
+          session_date: string
+          session_time: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          booking_type?: string
+          counselor_name?: string
+          created_at?: string
+          email_sent?: boolean | null
+          id?: string
+          session_date?: string
+          session_time?: string
+          status?: string
           updated_at?: string
           user_id?: string
         }

@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +17,9 @@ const CommunityForum = ({ language }: CommunityForumProps) => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showEditor, setShowEditor] = useState(false);
   const [newPost, setNewPost] = useState({ title: '', content: '', category: 'anxiety' });
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   const content = {
     en: {
@@ -59,47 +64,31 @@ const CommunityForum = ({ language }: CommunityForumProps) => {
     }
   };
 
-  const posts = [
-    {
-      id: 1,
-      title: language === 'en' ? 'Finding peace through meditation' : 'ध्यान के माध्यम से शांति पाना',
-      excerpt: language === 'en' 
-        ? 'Sharing how daily meditation helped me manage my anxiety...'
-        : 'दैनिक ध्यान ने मेरी चिंता को संभालने में कैसे मदद की...',
-      category: 'success',
-      author: content[language].anonymous,
-      likes: 24,
-      comments: 8,
-      isModerated: true,
-      timestamp: '2 hours ago'
-    },
-    {
-      id: 2,
-      title: language === 'en' ? 'Coping with work stress' : 'काम के तनाव से निपटना',
-      excerpt: language === 'en'
-        ? 'Looking for advice on managing workplace anxiety...'
-        : 'कार्यक्षेत्र की चिंता को संभालने के लिए सलाह चाहिए...',
-      category: 'anxiety',
-      author: content[language].anonymous,
-      likes: 12,
-      comments: 15,
-      isModerated: true,
-      timestamp: '4 hours ago'
-    },
-    {
-      id: 3,
-      title: language === 'en' ? 'Self-care routine that changed my life' : 'स्व-देखभाल की दिनचर्या जिसने मेरा जीवन बदल दिया',
-      excerpt: language === 'en'
-        ? 'Small changes in my daily routine made a huge difference...'
-        : 'मेरी दैनिक दिनचर्या में छोटे बदलावों ने बहुत फर्क किया...',
-      category: 'selfcare',
-      author: content[language].anonymous,
-      likes: 31,
-      comments: 6,
-      isModerated: true,
-      timestamp: '1 day ago'
+  // Load posts from database
+  useEffect(() => {
+    loadPosts();
+  }, []);
+
+  const loadPosts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('community_posts')
+        .select('*')
+        .eq('is_moderated', true)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading posts:', error);
+        return;
+      }
+
+      setPosts(data || []);
+    } catch (error) {
+      console.error('Error loading posts:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const filteredPosts = selectedCategory === 'all' 
     ? posts 
@@ -115,11 +104,40 @@ const CommunityForum = ({ language }: CommunityForumProps) => {
     return colors[category as keyof typeof colors] || 'default';
   };
 
-  const handlePublishPost = () => {
-    // Here you would typically send the post to your backend
-    console.log('Publishing post:', newPost);
-    setShowEditor(false);
-    setNewPost({ title: '', content: '', category: 'anxiety' });
+  const handlePublishPost = async () => {
+    if (!user) {
+      alert(language === 'en' ? 'Please login to post' : 'पोस्ट करने के लिए कृपया लॉगिन करें');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('community_posts')
+        .insert({
+          user_id: user.id,
+          title: newPost.title,
+          content: newPost.content,
+          category: newPost.category,
+          is_moderated: false // Will be moderated by admin
+        });
+
+      if (error) {
+        console.error('Error publishing post:', error);
+        alert(language === 'en' ? 'Error publishing post' : 'पोस्ट प्रकाशित करने में त्रुटि');
+        return;
+      }
+
+      alert(language === 'en' 
+        ? 'Post submitted for moderation. It will appear after approval.' 
+        : 'पोस्ट मॉडरेशन के लिए सबमिट की गई। अप्रूवल के बाद यह दिखेगी।');
+      
+      setShowEditor(false);
+      setNewPost({ title: '', content: '', category: 'anxiety' });
+      loadPosts(); // Reload posts
+    } catch (error) {
+      console.error('Error publishing post:', error);
+      alert(language === 'en' ? 'Error publishing post' : 'पोस्ट प्रकाशित करने में त्रुटि');
+    }
   };
 
   return (
@@ -160,14 +178,27 @@ const CommunityForum = ({ language }: CommunityForumProps) => {
 
         {/* Posts Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPosts.map((post) => (
+          {loading ? (
+            <div className="col-span-full text-center py-8">
+              <div className="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm shadow rounded-md text-white bg-primary">
+                Loading posts...
+              </div>
+            </div>
+          ) : filteredPosts.length === 0 ? (
+            <div className="col-span-full text-center py-8">
+              <p className="text-muted-foreground">
+                {language === 'en' ? 'No posts found in this category.' : 'इस श्रेणी में कोई पोस्ट नहीं मिली।'}
+              </p>
+            </div>
+          ) : (
+            filteredPosts.map((post) => (
             <Card key={post.id} className="glass border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <Badge variant={getCategoryColor(post.category)} className="mb-2">
                     {content[language].categories[post.category as keyof typeof content[typeof language]['categories']]}
                   </Badge>
-                  {post.isModerated && (
+                  {post.is_moderated && (
                     <Shield className="h-4 w-4 text-success" />
                   )}
                 </div>
@@ -178,32 +209,35 @@ const CommunityForum = ({ language }: CommunityForumProps) => {
               
               <CardContent className="space-y-4">
                 <p className="text-muted-foreground text-sm line-clamp-3">
-                  {post.excerpt}
+                  {post.content.substring(0, 150)}...
                 </p>
                 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Heart className="h-4 w-4" />
-                      <span>{post.likes}</span>
+                      <span>{post.likes_count || 0}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <MessageCircle className="h-4 w-4" />
-                      <span>{post.comments}</span>
+                      <span>{post.comments_count || 0}</span>
                     </div>
                   </div>
-                  <span className="text-xs text-muted-foreground">{post.timestamp}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(post.created_at).toLocaleDateString()}
+                  </span>
                 </div>
                 
                 <div className="flex items-center gap-2">
                   <Avatar className="h-6 w-6">
                     <AvatarFallback className="text-xs">A</AvatarFallback>
                   </Avatar>
-                  <span className="text-xs text-muted-foreground">{post.author}</span>
+                  <span className="text-xs text-muted-foreground">{content[language].anonymous}</span>
                 </div>
               </CardContent>
             </Card>
-          ))}
+            ))
+          )}
         </div>
 
         {/* Post Editor Modal */}

@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { MessageCircle, Send, Paperclip, X, Bot, User, Download, Image as ImageIcon } from 'lucide-react';
+import { MessageCircle, Send, Paperclip, X, Bot, User, Download, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ChatSupportProps {
   language: 'en' | 'hi';
@@ -119,59 +120,52 @@ const ChatSupport = ({ language, isOpen, onClose, user }: ChatSupportProps) => {
     setInputValue('');
     setIsTyping(true);
 
-    // Simulate AI response with quick replies
-    setTimeout(() => {
-      const aiResponses = {
-        en: [
-          {
-            text: "I understand you're going through a difficult time. It's brave of you to reach out for support.",
-            quickReplies: ["Tell me more", "I need help coping", "Connect me with counselor"]
-          },
-          {
-            text: "Those feelings are valid. Let's explore some coping strategies that might help you.",
-            quickReplies: ["Breathing exercises", "Meditation techniques", "Physical activities"]
-          },
-          {
-            text: "Thank you for sharing. Would you like me to connect you with a professional counselor?",
-            quickReplies: ["Yes, book session", "Not right now", "Tell me more about counselors"]
-          },
-          {
-            text: "I'm here to listen. Can you tell me more about what you're experiencing?",
-            quickReplies: ["I feel anxious", "I feel sad", "I can't sleep"]
-          }
-        ],
-        hi: [
-          {
-            text: "मैं समझ सकता हूँ कि आप मुश्किल समय से गुजर रहे हैं। सहायता मांगना बहादुरी है।",
-            quickReplies: ["और बताएं", "मुझे सहायता चाहिए", "काउंसलर से मिलाएं"]
-          },
-          {
-            text: "ये भावनाएं वैध हैं। आइए कुछ सामना करने की रणनीतियों पर नज़र डालते हैं।",
-            quickReplies: ["सांस की तकनीक", "ध्यान तकनीक", "शारीरिक गतिविधियां"]
-          },
-          {
-            text: "साझा करने के लिए धन्यवाद। क्या आप चाहेंगे कि मैं आपको किसी पेशेवर काउंसलर से जोड़ूं?",
-            quickReplies: ["हां, सत्र बुक करें", "अभी नहीं", "काउंसलर के बारे में बताएं"]
-          },
-          {
-            text: "मैं सुनने के लिए यहाँ हूँ। क्या आप बता सकते हैं कि आप क्या अनुभव कर रहे हैं?",
-            quickReplies: ["मुझे चिंता है", "मैं उदास हूँ", "मुझे नींद नहीं आती"]
-          }
-        ]
-      };
+    try {
+      // Send message to Gemini API via Supabase Edge Function
+      const { data, error } = await supabase.functions.invoke('gemini-chat', {
+        body: {
+          message: text,
+          history: messages
+            .filter(msg => msg.sender === 'user' || msg.sender === 'ai')
+            .map(msg => ({
+              role: msg.sender === 'user' ? 'user' : 'model',
+              parts: [{ text: msg.text }]
+            }))
+        }
+      });
 
-      const response = aiResponses[language][Math.floor(Math.random() * aiResponses[language].length)];
+      if (error) {
+        throw error;
+      }
+
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: response.text,
+        text: data.message || 'I apologize, but I\'m having trouble responding right now. Please try again.',
         sender: 'ai',
         timestamp: new Date(),
-        quickReplies: response.quickReplies
+        quickReplies: language === 'en' 
+          ? ["Tell me more", "I need help coping", "Connect me with counselor"]
+          : ["और बताएं", "मुझे सहायता चाहिए", "काउंसलर से मिलाएं"]
       };
 
       setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('Error sending message to AI:', error);
+      
+      // Fallback response
+      const fallbackMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: language === 'en' 
+          ? "I'm here to support you. While I'm having technical difficulties, please know that your feelings are valid and you're not alone."
+          : "मैं आपका समर्थन करने के लिए यहाँ हूँ। जबकि मुझे तकनीकी कठिनाइयां हो रही हैं, कृपया जानें कि आपकी भावनाएं वैध हैं और आप अकेले नहीं हैं।",
+        sender: 'ai',
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, fallbackMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1000 + Math.random() * 2000);
+    }
   };
 
   const handleQuickReply = (text: string) => {
@@ -233,14 +227,19 @@ const ChatSupport = ({ language, isOpen, onClose, user }: ChatSupportProps) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 md:p-4">
-      <Card className="w-full max-w-md h-[600px] md:h-[600px] h-screen md:rounded-lg rounded-none flex flex-col glass border-0 md:max-h-[600px]">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b">
+      <Card className="w-full max-w-lg h-[700px] md:h-[700px] h-screen md:rounded-lg rounded-none flex flex-col glass border-0 md:max-h-[700px] shadow-2xl">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b bg-gradient-to-r from-primary/10 to-primary/5">
           <CardTitle className="flex items-center gap-2">
-            <Bot className="h-5 w-5 text-primary" />
-            {content[language].title}
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20">
+              <Bot className="h-5 w-5 text-primary animate-pulse" />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-semibold">{content[language].title}</span>
+              <span className="text-xs text-muted-foreground">Always here to help</span>
+            </div>
           </CardTitle>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={clearHistory}>
+            <Button variant="ghost" size="sm" onClick={clearHistory} className="text-xs">
               Clear
             </Button>
             <Button variant="ghost" size="icon" onClick={onClose}>
@@ -249,9 +248,9 @@ const ChatSupport = ({ language, isOpen, onClose, user }: ChatSupportProps) => {
           </div>
         </CardHeader>
 
-        <CardContent className="flex-1 flex flex-col space-y-4">
+        <CardContent className="flex-1 flex flex-col space-y-4 p-4">
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+          <div className="flex-1 overflow-y-auto space-y-4 pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -320,14 +319,13 @@ const ChatSupport = ({ language, isOpen, onClose, user }: ChatSupportProps) => {
             ))}
 
             {isTyping && (
-              <div className="flex justify-start">
-                <div className="bg-secondary text-secondary-foreground p-3 rounded-lg max-w-[80%]">
+              <div className="flex justify-start animate-fade-in">
+                <div className="bg-secondary text-secondary-foreground p-3 rounded-lg max-w-[80%] shadow-md">
                   <div className="flex items-center gap-2">
-                    <Bot className="h-4 w-4" />
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-current rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                      <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    <Bot className="h-4 w-4 text-primary" />
+                    <div className="flex items-center gap-1">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-sm">SAARTHI is thinking...</span>
                     </div>
                   </div>
                 </div>
